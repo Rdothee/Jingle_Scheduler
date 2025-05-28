@@ -49,19 +49,3 @@ class MP3Scheduler:
             self.scheduler_thread.join()
 
 
-# Example usage:
-# if __name__ == "__main__":
-#     scheduler = MP3Scheduler()
-#     jingle =  Jingle("C:\\Users\\robbe\\OneDrive\\Documenten\\Gspot\\2024\\Jingles\\PianoSaloon1_Games-start-in-5-minutes.mp3","2024-05-08", "10:50:30")
-#     scheduler.schedule_mp3("2024-05-08", "22:26:00", "C:\\Users\\robbe\\OneDrive\\Documenten\\Gspot\\2024\\Jingles\\PianoSaloon1_Games-start-in-5-minutes.mp3")
-#     scheduler.schedule_mp3("2024-05-08", "22:26:35", "C:\\Users\\robbe\\OneDrive\\Documenten\\Gspot\\2024\\Jingles\\countryroads_LetTheGamesBegin.mp3")
-#     # scheduler.schedule_mp3("2024-05-12", "14:00:00", "path/to/your/song3.mp3")
-#
-#     # Start the scheduler
-#     scheduler.start_scheduler()
-#
-#     # Keep the program running to allow the scheduler to execute
-#     while True:
-#         time.sleep(1)
-
-

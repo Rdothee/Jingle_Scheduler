@@ -1,0 +1,89 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs-info/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.txt
+*.whl
+*.egg
+.env
+venv/
+env/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environments
+.env
+venv/
+env/
+
+# Coverage data
+.coverage
+*.coverage
+*.lcov
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+__pycache__/
+media/
+static/
+staticfiles/
+.sqlite3
+db.sqlite3
+
+# Flask stuff:
+instance/
+*.sqlite
+
+# Sphinx documentation
+docs/_build/
+
+# Temp files and directories
+*~
+*.swp
+*.bak
+*.tmp
+*.DS_Store
+
+# Poetry
+poetry.lock
+.venv
+
+# mypy cache
+.mypy_cache/
+
+# Pyright cache
+.pyrightconfig.json
+.pytype/
