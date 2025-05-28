@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="53617124-29e4-45ff-8e62-6535bafc2fe3" name="Changes" comment="gspot 2025">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/csv-editor.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Resources/Jingles.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Resources/Schedule.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mp3Scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/Mp3Scheduler.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Resources/songpaths.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Resources/Jingles.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Resources/Jingles.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Resources/Schedule.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Resources/Schedule.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +59,7 @@
     "Python.Mp3Scheduler.executor": "Debug",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "c928a949"
+    "git-widget-placeholder": "80029f7f"
   }
 }]]></component>
   <component name="RunManager">
@@ -127,11 +123,29 @@
       <option name="project" value="LOCAL" />
       <updated>1715246326450</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="gspot 2025">
+      <option name="closed" value="true" />
+      <created>1748428021546</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1748428021546</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="UnknownFeatures">
     <option featureType="com.intellij.fileTypeFactory" implementationName="*.csv" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ID_ORDER">
+      <list>
+        <option value="Default.Root" />
+        <option value="Default.Author" />
+        <option value="Default.Date" />
+        <option value="Default.Subject" />
+      </list>
+    </option>
   </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
