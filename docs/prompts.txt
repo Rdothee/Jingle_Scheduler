@@ -1,0 +1,7 @@
+create a torough plan for creating a UI of this application. 
+- i want to be able to play/pause the scheduler 
+- create matches 
+- set jingle locations and offsets
+- edit the schedule 
+the main screen should be an overview of the current generated schedule with live indiciation which jingles is playing has been played and is upcoming. 
+there should be seperate config screens for the edit of schedule and jingles. 

@@ -3,10 +3,11 @@ from Jingle import Jingle
 
 
 class Match:
-    def __init__(self, schedule, jingles):
+    def __init__(self, schedule, jingles, name=""):
         self.match_datetime = datetime.strptime(schedule, "%Y-%m-%d %H:%M:%S")
         self.jinglesData = jingles
         self.jingles = []
+        self.name = name
 
     def create_jingles(self):
         for jingle_info in self.jinglesData:

@@ -3,6 +3,7 @@ class Jingle:
         self._path = path
         self._date = date
         self._time_str = time_str
+        self._status = "PENDING"
 
     @property
     def path(self):
@@ -27,3 +28,11 @@ class Jingle:
     @time_str.setter
     def time_str(self, value):
         self._time_str = value
+
+    @property
+    def status(self):
+        return self._status
+
+    @status.setter
+    def status(self, value):
+        self._status = value
