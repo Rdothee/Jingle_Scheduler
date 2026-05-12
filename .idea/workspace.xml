@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="53617124-29e4-45ff-8e62-6535bafc2fe3" name="Changes" comment="gspot 2025">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Resources/Jingles.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Resources/Jingles.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Resources/Schedule.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Resources/Schedule.csv" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -51,17 +50,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.CsvReader.executor": "Debug",
-    "Python.Main.executor": "Run",
-    "Python.Match.executor": "Debug",
-    "Python.Mp3Scheduler.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "git-widget-placeholder": "80029f7f"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.CsvReader.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Match.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.Mp3Scheduler.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;gspot__2025&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;Errors&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="Main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Jingle_Scheduler" />
