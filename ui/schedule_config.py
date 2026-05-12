@@ -80,8 +80,11 @@ class ScheduleConfigFrame(ctk.CTkFrame):
         hdr.grid_propagate(False)
         hdr.grid_columnconfigure(2, weight=1)
         for col, (txt, w) in enumerate([("#", 40), ("Date & Time", 200), ("Match Name", 0)]):
-            ctk.CTkLabel(hdr, text=txt, font=ctk.CTkFont("Arial", 11, "bold"),
-                         text_color=TEXT_MUTED, width=w, anchor="w").grid(
+            kwargs = {"text": txt, "font": ctk.CTkFont("Arial", 11, "bold"),
+                      "text_color": TEXT_MUTED, "anchor": "w"}
+            if w:
+                kwargs["width"] = w
+            ctk.CTkLabel(hdr, **kwargs).grid(
                 row=0, column=col, padx=(20 if col == 0 else 8, 4), pady=6, sticky="w")
 
         self._scroll = ctk.CTkScrollableFrame(self, fg_color=CONTENT_BG, corner_radius=0)
@@ -211,7 +214,7 @@ class _MatchDialog(ctk.CTkToplevel):
         self.entry = entry
 
         self.title("Add Match" if mode == "add" else "Edit Match")
-        self.geometry("420x300")
+        self.geometry("440x440")
         self.resizable(False, False)
         self.configure(fg_color=CONTENT_BG)
         self.grab_set()

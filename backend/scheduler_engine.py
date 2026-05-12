@@ -150,12 +150,17 @@ class SchedulerEngine:
 
             for job in pending:
                 if job.scheduled_dt <= now:
-                    if self._paused:
-                        # Mark as skipped only if far in the past (> 30 s)
-                        if (now - job.scheduled_dt).total_seconds() > 30:
-                            self._set_status(job, JingleStatus.SKIPPED)
-                    else:
+                    # Catch-up rule (applies whether paused or running):
+                    # anything more than 30 s late is marked SKIPPED rather
+                    # than fired. This prevents a jingle storm if the
+                    # scheduler is launched (or resumed) hours after a
+                    # scheduled time has already passed.
+                    if (now - job.scheduled_dt).total_seconds() > 30:
+                        self._set_status(job, JingleStatus.SKIPPED)
+                    elif not self._paused:
                         self._play_job(job)
+                    # else: paused and within 30 s window → leave PENDING
+                    # so resume fires it on time
 
             if self.on_tick:
                 try:

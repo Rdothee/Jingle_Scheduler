@@ -55,6 +55,9 @@ class App(ctk.CTk):
         # match_uid → list[ScheduledJob]  (populated by load_and_start)
         self.match_jobs: dict[int, list] = {}
 
+        # Debounce token: cancel id of the pending refresh, if any
+        self._pending_refresh_id = None
+
         # ── Layout ─────────────────────────────────────────────────────────
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
@@ -63,7 +66,7 @@ class App(ctk.CTk):
         self._build_content_area()
 
         # ── Wire engine callbacks ───────────────────────────────────────────
-        self.engine.on_status_change = lambda job: self.after(0, self._on_status_change)
+        self.engine.on_status_change = lambda job: self.after(0, self._schedule_refresh)
         self.engine.on_tick          = lambda: self.after(0, self._on_tick)
 
         # ── Initial load ────────────────────────────────────────────────────
@@ -187,7 +190,7 @@ class App(ctk.CTk):
         self.engine.stop()
 
         self.engine = SchedulerEngine()
-        self.engine.on_status_change = lambda job: self.after(0, self._on_status_change)
+        self.engine.on_status_change = lambda job: self.after(0, self._schedule_refresh)
         self.engine.on_tick          = lambda: self.after(0, self._on_tick)
 
         self.match_manager.load()
@@ -204,9 +207,32 @@ class App(ctk.CTk):
 
     # ── Engine callbacks (main thread) ─────────────────────────────────────────
 
+    REFRESH_DEBOUNCE_MS = 120  # Coalesce rapid status changes into one refresh
+
+    def _schedule_refresh(self):
+        """Coalesce bursts of on_status_change calls into a single refresh.
+
+        Several jobs flipping to SKIPPED on startup, or a rebuild touching many
+        jobs at once, would otherwise trigger N back-to-back full refreshes —
+        freezing the UI for a couple of seconds.
+        """
+        if self._pending_refresh_id is not None:
+            try:
+                self.after_cancel(self._pending_refresh_id)
+            except Exception:
+                pass
+        self._pending_refresh_id = self.after(
+            self.REFRESH_DEBOUNCE_MS, self._on_status_change)
+
     def _on_status_change(self):
+        self._pending_refresh_id = None
         if self._current == "dashboard":
             self._screens["dashboard"].refresh()
+        else:
+            # Dashboard isn't visible — mark it dirty so on_show() rebuilds.
+            dash = self._screens.get("dashboard")
+            if dash is not None:
+                dash._needs_refresh = True
         self._update_status_label()
 
     def _on_tick(self):

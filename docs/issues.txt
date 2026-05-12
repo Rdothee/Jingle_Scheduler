@@ -1,0 +1,16 @@
+UI issues
+ - dashboard:
+    * when starting the application or reloading the schedule
+      -> the dashboard refreshes for a while and the ui is unresponsive
+      => solution: introduce a loading screen / spinner when the refresh is done show the correct dashboard
+    * optimization is needed
+      -> scrolling is slow
+
+ - matches:
+    * when adding/editing a match
+      -> there is no save or cancel button in the popup
+      => solution: add a save and cancel button
+ - jingles:
+    * the alignment of the text in the jingles tab > table is not correct.
+    => solution: align the text in the table to the center of each cell.
+

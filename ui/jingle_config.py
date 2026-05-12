@@ -46,6 +46,8 @@ class JingleConfigFrame(ctk.CTkFrame):
         self._build_list()
         self._build_timeline()
         self._build_bottombar()
+        # All widgets now exist → safe to populate the list + timeline
+        self._refresh_list()
 
     def _build_topbar(self):
         bar = ctk.CTkFrame(self, fg_color=SIDEBAR_BG, corner_radius=0, height=70)
@@ -87,17 +89,19 @@ class JingleConfigFrame(ctk.CTkFrame):
         hdr.grid_columnconfigure(2, weight=1)
 
         for col, (txt, w) in enumerate([("#", 40), ("Offset", 80), ("Name / File", 0), ("Path", 0)]):
-            ctk.CTkLabel(hdr, text=txt, font=ctk.CTkFont("Arial", 11, "bold"),
-                         text_color=TEXT_MUTED, width=w if w else None,
-                         anchor="w").grid(row=0, column=col,
-                                          padx=(20 if col == 0 else 8, 4),
-                                          pady=6, sticky="w")
+            kwargs = {"text": txt, "font": ctk.CTkFont("Arial", 11, "bold"),
+                      "text_color": TEXT_MUTED, "anchor": "center"}
+            if w:
+                kwargs["width"] = w
+            ctk.CTkLabel(hdr, **kwargs).grid(
+                row=0, column=col,
+                padx=(20 if col == 0 else 8, 4),
+                pady=6, sticky="nsew")
 
         self._scroll = ctk.CTkScrollableFrame(self, fg_color=CONTENT_BG, corner_radius=0)
         self._scroll.grid(row=3, column=0, sticky="nsew")
         self.grid_rowconfigure(3, weight=1)
         self._scroll.grid_columnconfigure(2, weight=1)
-        self._refresh_list()
 
     def _build_timeline(self):
         """Horizontal visual showing when each jingle fires relative to match start."""
@@ -114,7 +118,6 @@ class JingleConfigFrame(ctk.CTkFrame):
         self._timeline_canvas_frame = ctk.CTkFrame(self._timeline_frame,
                                                    fg_color="transparent")
         self._timeline_canvas_frame.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 8))
-        self._refresh_timeline()
 
     def _build_bottombar(self):
         bar = ctk.CTkFrame(self, fg_color=SIDEBAR_BG, corner_radius=0, height=56)
@@ -147,27 +150,27 @@ class JingleConfigFrame(ctk.CTkFrame):
 
             ctk.CTkLabel(row, text=str(i + 1), width=40,
                          font=ctk.CTkFont("Arial", 12),
-                         text_color=TEXT_MUTED, anchor="w").grid(
-                row=0, column=0, padx=(16, 4), sticky="w")
+                         text_color=TEXT_MUTED, anchor="center").grid(
+                row=0, column=0, padx=(16, 4), sticky="nsew")
 
             sign = "+" if jd.offset >= 0 else ""
             ctk.CTkLabel(row, text=f"{sign}{jd.offset}m", width=70,
                          font=ctk.CTkFont("Courier", 12),
-                         text_color=ACCENT, anchor="w").grid(
-                row=0, column=1, padx=8, sticky="w")
+                         text_color=ACCENT, anchor="center").grid(
+                row=0, column=1, padx=8, sticky="nsew")
 
             ctk.CTkLabel(row, text=jd.display_name,
                          font=ctk.CTkFont("Arial", 12),
-                         text_color=TEXT_PRIMARY, anchor="w").grid(
-                row=0, column=2, padx=8, sticky="w")
+                         text_color=TEXT_PRIMARY, anchor="center").grid(
+                row=0, column=2, padx=8, sticky="nsew")
 
             exists = os.path.isfile(jd.path)
             path_color = TEXT_MUTED if exists else DANGER
             path_text  = (os.path.basename(jd.path) if exists
                           else f"⚠ NOT FOUND: {os.path.basename(jd.path)}")
             ctk.CTkLabel(row, text=path_text, font=ctk.CTkFont("Arial", 10),
-                         text_color=path_color, anchor="w").grid(
-                row=0, column=3, padx=(0, 16), sticky="w")
+                         text_color=path_color, anchor="center").grid(
+                row=0, column=3, padx=(0, 16), sticky="nsew")
 
             for widget in (row, *row.winfo_children()):
                 widget.bind("<Button-1>", lambda e, j=jd, r=row: self._select(j, r))
@@ -297,7 +300,7 @@ class _JingleDialog(ctk.CTkToplevel):
         self.jd = jd
 
         self.title("Add Jingle" if mode == "add" else "Edit Jingle")
-        self.geometry("520x320")
+        self.geometry("540x460")
         self.resizable(False, False)
         self.configure(fg_color=CONTENT_BG)
         self.grab_set()

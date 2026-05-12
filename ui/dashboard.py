@@ -31,6 +31,12 @@ class DashboardFrame(ctk.CTkFrame):
         super().__init__(parent, fg_color=CONTENT_BG, corner_radius=0)
         self.app = app
         self._pulse_state = True      # for PLAYING animation
+        self._loading_overlay = None  # CTkFrame shown while refresh runs
+        self._spinner_step = 0
+        # When False, on_show() skips refresh because the dashboard already
+        # reflects current state. Flipped to True by app._schedule_refresh()
+        # while the dashboard is hidden, and after rebuild().
+        self._needs_refresh = False
         self._build_ui()
         self._start_pulse()
 
@@ -43,6 +49,8 @@ class DashboardFrame(ctk.CTkFrame):
         self._build_topbar()
         self._build_schedule_list()
         self._build_nowplaying_bar()
+        # All widgets exist → safe to populate
+        self.refresh()
 
     def _build_topbar(self):
         bar = ctk.CTkFrame(self, fg_color=SIDEBAR_BG, corner_radius=0, height=70)
@@ -85,7 +93,6 @@ class DashboardFrame(ctk.CTkFrame):
         )
         self._scroll.grid(row=1, column=0, sticky="nsew", padx=0, pady=0)
         self._scroll.grid_columnconfigure(0, weight=1)
-        self.refresh()
 
     def _build_nowplaying_bar(self):
         bar = ctk.CTkFrame(self, fg_color=SIDEBAR_BG, corner_radius=0, height=52)
@@ -105,26 +112,47 @@ class DashboardFrame(ctk.CTkFrame):
     # ── Refresh / build match cards ────────────────────────────────────────────
 
     def refresh(self):
+        # Whatever queued this rebuild, we're servicing it now.
+        self._needs_refresh = False
+        # Show overlay while we destroy/rebuild every card — the gap can be
+        # 100-300 ms on a slow machine and looks like a hang otherwise.
+        self._show_loading_overlay()
+
         for w in self._scroll.winfo_children():
             w.destroy()
+        # Drop stale badge references — they belong to destroyed widgets
+        self._playing_badges = []
+        self._focus_card = None
 
         matches = self.app.match_manager.get_sorted()
         if not matches:
             ctk.CTkLabel(self._scroll, text="No matches scheduled.",
                          text_color=TEXT_MUTED,
                          font=ctk.CTkFont("Arial", 14)).pack(pady=40)
+            self._hide_loading_overlay()
             return
 
         now = datetime.datetime.now()
-        found_current = False
+        # Focus rule: currently-playing match wins; else earliest match
+        # whose start time is in the future
+        focus_uid = None
+        for m in matches:
+            jobs = self.app.match_jobs.get(m.uid, [])
+            if any(j.status.value == "PLAYING" for j in jobs):
+                focus_uid = m.uid
+                break
+        if focus_uid is None:
+            upcoming = [m for m in matches if m.start_dt >= now]
+            if upcoming:
+                focus_uid = upcoming[0].uid
 
         for i, match in enumerate(matches):
             jobs = self.app.match_jobs.get(match.uid, [])
             is_current = any(j.status.value == "PLAYING" for j in jobs)
-            is_past    = all(j.status.value in ("PLAYED", "SKIPPED") for j in jobs) and jobs
-            is_upcoming = not is_current and not is_past
 
-            self._build_match_card(match, jobs, i, is_current)
+            card = self._build_match_card(match, jobs, i, is_current)
+            if match.uid == focus_uid:
+                self._focus_card = card
 
         # Update now-playing bar
         current_job = self.app.engine.current_job
@@ -134,8 +162,76 @@ class DashboardFrame(ctk.CTkFrame):
         else:
             self._nowplaying_label.configure(text="—")
 
+        if self._focus_card is not None:
+            self.after(50, self._scroll_to_focus)
+
+        # Defer hide so the user can actually see it briefly on long refreshes
+        self.after(80, self._hide_loading_overlay)
+
+    # ── Loading overlay ───────────────────────────────────────────────────────
+
+    def _show_loading_overlay(self):
+        if self._loading_overlay is not None and self._loading_overlay.winfo_exists():
+            return  # already visible
+        # Place overlay on top of the scrollable list area (row 1)
+        self._loading_overlay = ctk.CTkFrame(self, fg_color=CONTENT_BG)
+        self._loading_overlay.grid(row=1, column=0, sticky="nsew")
+        self._loading_overlay.grid_rowconfigure(0, weight=1)
+        self._loading_overlay.grid_columnconfigure(0, weight=1)
+
+        inner = ctk.CTkFrame(self._loading_overlay, fg_color="transparent")
+        inner.grid(row=0, column=0)
+
+        self._spinner_label = ctk.CTkLabel(
+            inner, text="⠋", font=ctk.CTkFont("Arial", 36, "bold"),
+            text_color=ACCENT)
+        self._spinner_label.pack(pady=(0, 8))
+        ctk.CTkLabel(
+            inner, text="Loading schedule…",
+            font=ctk.CTkFont("Arial", 13),
+            text_color=TEXT_MUTED).pack()
+
+        self._loading_overlay.tkraise()
+        self._spin()
+
+    def _spin(self):
+        frames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+        if self._loading_overlay is None or not self._loading_overlay.winfo_exists():
+            return
+        self._spinner_step = (self._spinner_step + 1) % len(frames)
+        try:
+            self._spinner_label.configure(text=frames[self._spinner_step])
+        except Exception:
+            return
+        self.after(80, self._spin)
+
+    def _hide_loading_overlay(self):
+        if self._loading_overlay is not None and self._loading_overlay.winfo_exists():
+            self._loading_overlay.destroy()
+        self._loading_overlay = None
+
+    def _scroll_to_focus(self):
+        """Scroll the schedule list so the focused match sits near the top."""
+        card = getattr(self, "_focus_card", None)
+        if card is None or not card.winfo_exists():
+            return
+        try:
+            canvas = self._scroll._parent_canvas
+            canvas.update_idletasks()
+            bbox = canvas.bbox("all")
+            if not bbox:
+                return
+            total_height = bbox[3]
+            visible_height = canvas.winfo_height()
+            if total_height <= visible_height:
+                return  # Nothing to scroll
+            target_y = max(0, card.winfo_y() - 80)
+            fraction = min(1.0, target_y / max(total_height - visible_height, 1))
+            canvas.yview_moveto(fraction)
+        except (AttributeError, KeyError):
+            pass
+
     def _build_match_card(self, match, jobs, index, is_current):
-        now = datetime.datetime.now()
         is_past = all(j.status.value in ("PLAYED", "SKIPPED") for j in jobs) and jobs
         is_active = any(j.status.value == "PLAYING" for j in jobs)
 
@@ -145,7 +241,8 @@ class DashboardFrame(ctk.CTkFrame):
             corner_radius=10, border_width=2, border_color=border_color
         )
         card.grid(row=index, column=0, sticky="ew", padx=20, pady=6)
-        card.grid_columnconfigure(1, weight=1)
+        # Columns: 0 icon | 1 connector | 2 time | 3 name (weight) | 4 badge
+        card.grid_columnconfigure(3, weight=1)
 
         # Match header icon
         if is_active:
@@ -161,25 +258,29 @@ class DashboardFrame(ctk.CTkFrame):
                      text_color=icon_color, width=36).grid(
             row=0, column=0, padx=(16, 4), pady=14)
 
-        # Match time + name
+        # Match time + name (spans the right side)
         label = match.display_label
         time_str = match.start_dt.strftime("%Y-%m-%d  %H:%M")
         header_text = f"{time_str}   —   {label}"
         ctk.CTkLabel(card, text=header_text,
                      font=ctk.CTkFont("Arial", 14, "bold"),
                      text_color=TEXT_PRIMARY if not is_past else TEXT_MUTED,
-                     anchor="w").grid(row=0, column=1, sticky="w", pady=14)
+                     anchor="w").grid(row=0, column=1, columnspan=4,
+                                       sticky="w", pady=14)
 
         if not jobs:
             ctk.CTkLabel(card, text="No jingles defined",
                          text_color=TEXT_MUTED,
                          font=ctk.CTkFont("Arial", 11)).grid(
-                row=1, column=0, columnspan=3, padx=56, pady=(0, 10), sticky="w")
-            return
+                row=1, column=1, columnspan=4, padx=(16, 16),
+                pady=(0, 10), sticky="w")
+            return card
 
-        # Jingle rows
+        # Jingle rows — gridded directly onto the card (no inner frame)
         for j_idx, job in enumerate(jobs):
             self._build_jingle_row(card, job, j_idx + 1, len(jobs))
+
+        return card
 
     def _build_jingle_row(self, card, job, row_num, total):
         fire_str = job.scheduled_dt.strftime("%H:%M:%S")
@@ -187,40 +288,34 @@ class DashboardFrame(ctk.CTkFrame):
         status   = job.status.value if hasattr(job.status, "value") else str(job.status)
         bg, fg   = STATUS_COLORS.get(status, STATUS_COLORS["PENDING"])
 
-        row_frame = ctk.CTkFrame(card, fg_color="transparent")
-        row_frame.grid(row=row_num, column=0, columnspan=3, sticky="ew",
-                       padx=(52, 16), pady=2)
-        row_frame.grid_columnconfigure(1, weight=1)
-
-        # Connector line
+        # Connector line (column 1, padded so it sits ~52px from the card edge)
         connector = "└─" if row_num == total else "├─"
-        ctk.CTkLabel(row_frame, text=connector, text_color="#4b5563",
+        ctk.CTkLabel(card, text=connector, text_color="#4b5563",
                      font=ctk.CTkFont("Courier", 11), width=24).grid(
-            row=0, column=0, sticky="w")
+            row=row_num, column=1, sticky="w", padx=(16, 0), pady=2)
 
         # Time
-        ctk.CTkLabel(row_frame, text=fire_str,
+        ctk.CTkLabel(card, text=fire_str,
                      font=ctk.CTkFont("Courier", 12),
                      text_color=TEXT_MUTED, width=70).grid(
-            row=0, column=1, sticky="w", padx=(4, 12))
+            row=row_num, column=2, sticky="w", padx=(4, 12), pady=2)
 
-        # Name
-        ctk.CTkLabel(row_frame, text=name,
+        # Name (fills remaining horizontal space)
+        ctk.CTkLabel(card, text=name,
                      font=ctk.CTkFont("Arial", 12),
                      text_color=TEXT_PRIMARY if status != "PLAYED" else TEXT_MUTED,
-                     anchor="w").grid(row=0, column=2, sticky="w")
+                     anchor="w").grid(row=row_num, column=3, sticky="ew", pady=2)
 
         # Status badge
         badge = ctk.CTkLabel(
-            row_frame, text=f"  {status}  ",
+            card, text=f"  {status}  ",
             font=ctk.CTkFont("Arial", 10, "bold"),
             fg_color=bg, text_color=fg, corner_radius=6
         )
-        badge.grid(row=0, column=3, padx=(12, 0), pady=3)
+        badge.grid(row=row_num, column=4, padx=(12, 16), pady=3, sticky="e")
 
         # Store PLAYING badges for pulse animation
         if status == "PLAYING":
-            self._playing_badges = getattr(self, "_playing_badges", [])
             self._playing_badges.append(badge)
 
     # ── Controls ──────────────────────────────────────────────────────────────
@@ -266,7 +361,11 @@ class DashboardFrame(ctk.CTkFrame):
         self.after(600, self._start_pulse)
 
     def on_show(self):
-        self.refresh()
+        # Skip the (expensive) full rebuild if nothing has changed since the
+        # last refresh — large schedules can take 1-3 s to re-render.
+        if self._needs_refresh:
+            self._needs_refresh = False
+            self.refresh()
         if self.app.engine.is_paused:
             self._play_btn.configure(text="▶  Resume", fg_color="#374151")
         else:
